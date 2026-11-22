@@ -1,1 +1,1 @@
-"""Phase placeholder: implemented in a later phase (see docs/PLAN.md)."""
+"""Frames (Pillow + raqm, matplotlib), captions (ASS) and ffmpeg assembly."""

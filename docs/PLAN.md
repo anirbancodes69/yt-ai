@@ -1,6 +1,6 @@
 # PLAN — Automated Hindi buying-guide channel
 
-Status: Phase 2 complete, awaiting review. Each phase ends with a stop for review.
+Status: Phase 3 complete, awaiting review. Each phase ends with a stop for review.
 
 ## 1. What I understand we are building
 
@@ -133,7 +133,7 @@ docs/FACTCHECK.md.
   number in narration, hands-on phrasing, missing disclosure).
 - An offline "fixture" script so `make demo` works without an API key.
 
-### Phase 3 — Voice and render
+### Phase 3 — Voice and render  ✅ (see docs/RENDER.md)
 - `TTSProvider` protocol, Google Cloud TTS impl, cached by text hash; an
   offline silent/beep provider for tests and keyless demo.
 - Frames: scorecards, price-history chart, ranked bars, buy-if/skip-if cards,

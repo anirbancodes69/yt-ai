@@ -20,6 +20,35 @@ pricing_usd_per_mtok:
   claude-sonnet-5-5: {input: 2.0, output: 10.0, cache_read: 0.10, cache_write: 2.5}
   claude-haiku-5-5:  {input: 0.1, output: 0.5,  cache_read: 0.01, cache_write: 0.125}
 
+tts:
+  provider: google            # google | espeak (offline, robotic; for demos/tests). CLI: --tts
+  google:
+    voices: {hi: hi-IN-Neural2-B, en: en-IN-Neural2-B}
+    speaking_rate: 1.0
+  espeak:
+    voices: {hi: hi, en: en-us}
+    wpm: 165
+  # Characters are billed per month after a free allowance. Verify against
+  # https://cloud.google.com/text-to-speech/pricing (Neural2: 1M free, then $16/1M as of 2026-11).
+  pricing:
+    google: {usd_per_mchar: 16.0, free_chars_per_month: 1000000}
+    espeak: {usd_per_mchar: 0.0, free_chars_per_month: 0}
+
+render:
+  fps: 30
+  sentence_gap_s: 0.25
+  section_gap_s: 0.6
+  lead_in_s: 0.4
+  tail_s: 1.0
+  anim_frames: 18             # bar/scorecard growth animation length
+  crossfade_frames: 6
+  music_volume_db: -20        # music bed under the voice, ducked further while speaking
+  x264_preset: veryfast
+  crf: 20
+  scale: 1.0                  # 1.0 = 1920x1080 / 1080x1920; tests use smaller
+  max_speedup: 1.2            # narration may be sped up at most this much to fit the format
+  max_slowdown: 0.9
+
 paths:
   products: data/products.yaml
   prices: data/prices.csv
@@ -27,9 +56,13 @@ paths:
   formats: config/formats.yaml
   factcheck: config/factcheck.yaml
   script_text: config/script_text.yaml
+  render_text: config/render_text.yaml
   out: out
   cache: cache
   db: cache/channel.sqlite
+  press: assets/press
+  music: assets/music
+  fonts: assets/fonts
 
 budget:
   monthly_inr: 3000           # hard cap across all paid APIs; calls are refused once reached

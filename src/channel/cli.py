@@ -13,6 +13,9 @@ from channel.data import DataError, Dataset, PriceProviderError, load_dataset, m
 from channel.factcheck import FactCheckBlocked, require_passed
 from channel.fmt import inr, num
 from channel.formats import FORMAT_NAMES, load_formats
+from channel.render.fonts import font_set
+from channel.render.pipeline import contact_sheet, render_video
+from channel.render.testframe import render_caption_test, render_test_frame
 from channel.scoring import (
     BandRanking,
     Comparison,
@@ -318,7 +321,69 @@ def cmd_demo(args: argparse.Namespace, settings: Settings) -> int:
     else:
         print("  gate: tampered script was NOT blocked — this is a bug", file=sys.stderr)
         return 1
+
+    if args.skip_render:
+        return 0
+    print("\n=== Phase 3: voice + render (espeak-ng offline voice; Google TTS when configured) ===")
+    if cmd_proofs(args, settings) != 0:
+        return 1
+    tts = args.tts or "espeak"
+    for video_dir in made:
+        r = render_video(ctx, video_dir, tts_provider=tts)
+        spec = ctx.formats.spec(
+            Script.model_validate_json((video_dir / "script.json").read_text("utf-8")).brief.format
+        )
+        lo, hi = spec.target_seconds
+        ok = lo <= r.duration <= hi
+        print(
+            f"  {'OK ' if ok else 'BAD'} {r.video}  {r.duration:.1f}s (target {lo:.0f}-{hi:.0f}s)  "
+            f"{r.width}x{r.height}  shots={r.shots}  API cost ₹{r.cost_inr:.2f}"
+        )
+        if not ok:
+            return 1
     return 0
+
+
+# -------------------------------------------------------------------- render (phase 3)
+
+
+def cmd_render(args: argparse.Namespace, settings: Settings) -> int:
+    ctx = Context.load(settings)
+    video_dir = Path(args.video)
+    if not video_dir.is_absolute() and not video_dir.exists():
+        video_dir = ctx.video_dir(args.video)
+    r = render_video(
+        ctx, video_dir, tts_provider=args.tts or settings.tts.provider, keep_frames=args.keep_frames
+    )
+    print(
+        f"rendered {r.video}  {r.duration:.1f}s  {r.width}x{r.height}  shots={r.shots}  "
+        f"API cost ₹{r.cost_inr:.2f}"
+    )
+    return 0
+
+
+def cmd_proofs(args: argparse.Namespace, settings: Settings) -> int:
+    """Devanagari shaping proofs (Pillow + libass) and the five-format contact sheet."""
+    ctx = Context.load(settings)
+    out = settings.paths.out / "test_frames"
+    widths = render_test_frame(font_set(settings.paths.fonts), out / "devanagari.png")
+    shaped = all(a != b for a, b in zip(widths["raqm"], widths["basic"], strict=True))
+    caps = render_caption_test(out / "captions_devanagari.png")
+    sheet = contact_sheet(
+        ctx,
+        out / "formats_contact_sheet.png",
+        lang=settings.lang,
+        as_of=_as_of(args, settings, ctx.dataset),
+    )
+    print(
+        f"Pillow raqm shaping differs from BASIC on every sample: {shaped} -> {out}/devanagari.png"
+    )
+    print(
+        f"libass complex shaping differs from simple: {caps['simple'] != caps['complex']} "
+        f"-> {out}/captions_devanagari.png"
+    )
+    print(f"five formats -> {sheet}")
+    return 0 if shaped and caps["simple"] != caps["complex"] else 1
 
 
 # ---------------------------------------------------------------------------- main
@@ -364,8 +429,18 @@ def build_parser() -> argparse.ArgumentParser:
     co.add_argument("--month", help="YYYY-MM (default: current month)")
     co.add_argument("--video")
 
+    rn = sub.add_parser("render", help="voice + render a fact-checked script to MP4")
+    rn.add_argument("video", help="video id (out/videos/<id>) or a path to its folder")
+    rn.add_argument("--tts", choices=("google", "espeak"), help="default: settings tts.provider")
+    rn.add_argument("--keep-frames", action="store_true")
+
+    pf = sub.add_parser("proofs", help="Devanagari shaping proofs + five-format contact sheet")
+    pf.add_argument("--as-of")
+
     d = sub.add_parser("demo", help="run the current phase's end-to-end demo")
     d.add_argument("--as-of")
+    d.add_argument("--tts", choices=("google", "espeak"), help="default: espeak (offline)")
+    d.add_argument("--skip-render", action="store_true", help="stop after scripts")
     return p
 
 
@@ -378,6 +453,8 @@ COMMANDS = {
     "script": cmd_script,
     "factcheck": cmd_factcheck,
     "costs": cmd_costs,
+    "render": cmd_render,
+    "proofs": cmd_proofs,
     "demo": cmd_demo,
 }
 

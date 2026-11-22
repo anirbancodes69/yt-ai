@@ -5,9 +5,10 @@ FROM python:3.12-slim-bookworm
 # ffmpeg: video assembly (Phase 3)
 # libraqm0 + libharfbuzz0b + libfribidi0 + libfreetype6: correct Devanagari shaping in Pillow
 # fonts-noto-core: includes Noto Sans Devanagari
+# espeak-ng: offline Hindi/English TTS for keyless demos and tests (Google Cloud TTS is primary)
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
-      ffmpeg libraqm0 libharfbuzz0b libfribidi0 libfreetype6 fonts-noto-core make \
+      ffmpeg libraqm0 libharfbuzz0b libfribidi0 libfreetype6 fonts-noto-core espeak-ng make \
  && rm -rf /var/lib/apt/lists/*
 
 COPY --from=ghcr.io/astral-sh/uv:0.13.7 /uv /uvx /usr/local/bin/

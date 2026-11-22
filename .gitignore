@@ -10,3 +10,6 @@ cache/
 *.sqlite3
 assets/music/*
 !assets/music/.gitkeep
+secrets/
+assets/press/*
+!assets/press/.gitkeep

@@ -126,6 +126,16 @@ class Store:
         ).fetchone()
         return float(row["s"])
 
+    def month_units(self, provider: str, month: str | None = None) -> int:
+        """Billable units (e.g. TTS characters) used this month, excluding cache hits."""
+        month = month or _now().strftime("%Y-%m")
+        row = self.db.execute(
+            "SELECT COALESCE(SUM(units), 0) AS s FROM cost_ledger "
+            "WHERE month = ? AND provider = ? AND cached = 0",
+            (month, provider),
+        ).fetchone()
+        return int(row["s"])
+
     def video_costs(self, video_id: str) -> list[dict[str, Any]]:
         rows = self.db.execute(
             "SELECT * FROM cost_ledger WHERE video_id = ? ORDER BY id", (video_id,)

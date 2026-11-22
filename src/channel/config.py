@@ -28,9 +28,13 @@ class Paths(_Cfg):
     formats: Path
     factcheck: Path
     script_text: Path
+    render_text: Path
     out: Path
     cache: Path
     db: Path
+    press: Path
+    music: Path
+    fonts: Path
 
 
 class Budget(_Cfg):
@@ -53,6 +57,44 @@ class Price(_Cfg):
     cache_write: float = Field(ge=0)
 
 
+class GoogleTTS(_Cfg):
+    voices: dict[str, str]
+    speaking_rate: float = Field(gt=0)
+
+
+class EspeakTTS(_Cfg):
+    voices: dict[str, str]
+    wpm: int = Field(gt=0)
+
+
+class TTSPrice(_Cfg):
+    usd_per_mchar: float = Field(ge=0)
+    free_chars_per_month: int = Field(ge=0)
+
+
+class TTS(_Cfg):
+    provider: Literal["google", "espeak"]
+    google: GoogleTTS
+    espeak: EspeakTTS
+    pricing: dict[str, TTSPrice]
+
+
+class Render(_Cfg):
+    fps: int = Field(gt=0)
+    sentence_gap_s: float = Field(ge=0)
+    section_gap_s: float = Field(ge=0)
+    lead_in_s: float = Field(ge=0)
+    tail_s: float = Field(ge=0)
+    anim_frames: int = Field(ge=1)
+    crossfade_frames: int = Field(ge=0)
+    music_volume_db: float
+    x264_preset: str
+    crf: int = Field(ge=0, le=51)
+    scale: float = Field(gt=0, le=1)
+    max_speedup: float = Field(ge=1)
+    max_slowdown: float = Field(gt=0, le=1)
+
+
 class Demo(_Cfg):
     as_of: date
 
@@ -64,6 +106,8 @@ class Settings(_Cfg):
     price_history_days: int = Field(gt=0)
     llm: LLM
     pricing_usd_per_mtok: dict[str, Price]
+    tts: TTS
+    render: Render
     paths: Paths
     budget: Budget
     demo: Demo

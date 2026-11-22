@@ -70,7 +70,8 @@ def test_cli_unknown_product_is_clean_error(tmp_out, capsys) -> None:
 
 
 def test_cli_demo_writes_outputs(tmp_out, capsys) -> None:
-    assert cli.main(["demo"]) == 0
+    # --skip-render: the full render is covered by tests/test_render.py (and `make demo`).
+    assert cli.main(["demo", "--skip-render"]) == 0
     files = {p.name for p in (tmp_out / "demo" / "phase1").iterdir()}
     assert {f"best_under_{b}.json" for b in (10000, 15000, 20000, 30000, 50000)} <= files
     assert "scores.json" in files
