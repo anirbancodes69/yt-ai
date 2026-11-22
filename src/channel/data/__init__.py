@@ -1,7 +1,7 @@
 """Product data: models, loading, price providers, price selection."""
 
 from channel.data.loader import DataError, load_dataset, load_products
-from channel.data.models import Dataset, LaunchInfo, PricePoint, Product, Spec
+from channel.data.models import Dataset, LaunchInfo, Listing, PricePoint, Product, Spec
 from channel.data.prices import (
     AmazonAssociatesProvider,
     FlipkartAffiliateProvider,
@@ -19,6 +19,7 @@ __all__ = [
     "Dataset",
     "FlipkartAffiliateProvider",
     "LaunchInfo",
+    "Listing",
     "ManualCSVProvider",
     "PricePoint",
     "PriceProvider",

@@ -1,6 +1,6 @@
 # PLAN — Automated Hindi buying-guide channel
 
-Status: Phase 3 complete, awaiting review. Each phase ends with a stop for review.
+Status: Phase 4 complete, awaiting review. Each phase ends with a stop for review.
 
 ## 1. What I understand we are building
 
@@ -141,7 +141,7 @@ docs/FACTCHECK.md.
 - ffmpeg assembly with music ducking. Five visually distinct format templates.
 - `make demo` → one 6–9 min long-form + one vertical Short from sample data.
 
-### Phase 4 — Packaging
+### Phase 4 — Packaging  ✅ (see docs/PACKAGING.md)
 - Title/description/tags/chapters per format; disclosure line 1; affiliate
   links from config; code-generated thumbnail; length/char-limit validation.
 

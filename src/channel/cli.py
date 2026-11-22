@@ -4,15 +4,23 @@ from __future__ import annotations
 
 import argparse
 import json
+import shutil
 import sys
 from datetime import date
 from pathlib import Path
 
 from channel.config import Settings, load_settings
 from channel.data import DataError, Dataset, PriceProviderError, load_dataset, make_provider
-from channel.factcheck import FactCheckBlocked, require_passed
+from channel.factcheck import FactCheckBlocked, load_factcheck_config, require_passed
 from channel.fmt import inr, num
 from channel.formats import FORMAT_NAMES, load_formats
+from channel.packaging import (
+    PackageBlocked,
+    package_video,
+    preview_all,
+    require_package,
+)
+from channel.packaging.builder import fmt_ts
 from channel.render.fonts import font_set
 from channel.render.pipeline import contact_sheet, render_video
 from channel.render.testframe import render_caption_test, render_test_frame
@@ -341,7 +349,7 @@ def cmd_demo(args: argparse.Namespace, settings: Settings) -> int:
         )
         if not ok:
             return 1
-    return 0
+    return _demo_packaging(ctx, settings, made, args)
 
 
 # -------------------------------------------------------------------- render (phase 3)
@@ -384,6 +392,116 @@ def cmd_proofs(args: argparse.Namespace, settings: Settings) -> int:
     )
     print(f"five formats -> {sheet}")
     return 0 if shaped and caps["simple"] != caps["complex"] else 1
+
+
+# ------------------------------------------------------------------ packaging (phase 4)
+
+
+def _print_package(pkg, report, pkg_dir) -> None:
+    print(report.summary())
+    print(f"  title: {pkg.title}")
+    print(
+        f"  {len(pkg.description.encode())} description bytes, {len(pkg.tags)} tags, "
+        f"{len(pkg.chapters)} chapters, {len(pkg.links)} links -> {pkg_dir}/"
+    )
+
+
+def cmd_package(args: argparse.Namespace, settings: Settings) -> int:
+    ctx = Context.load(settings)
+    video_dir = Path(args.video)
+    if not video_dir.is_absolute() and not video_dir.exists():
+        video_dir = ctx.video_dir(args.video)
+    pkg, report, pkg_dir = package_video(ctx, video_dir, variant=args.variant)
+    _print_package(pkg, report, pkg_dir)
+    return 0 if report.status == "pass" else 1
+
+
+def cmd_package_preview(args: argparse.Namespace, settings: Settings) -> int:
+    """Title/description/tags/thumbnail for all five formats, from data alone (not uploadable)."""
+    ctx = Context.load(settings)
+    out = settings.paths.out / "demo" / "phase4" / "previews"
+    bad = 0
+    for pkg, report in preview_all(
+        ctx,
+        out,
+        lang=getattr(args, "lang", None) or settings.lang,
+        as_of=_as_of(args, settings, ctx.dataset),
+    ):
+        print(f"{report.status.upper():<4} {pkg.format:<17} {len(pkg.title):>3} chars  {pkg.title}")
+        for e in report.errors:
+            print(f"     ERROR {e.code}: {e.detail}")
+        bad += report.status != "pass"
+    print(f"previews -> {out}/<format>/ (package.json, description.txt, thumbnail.png)")
+    return 1 if bad else 0
+
+
+def _demo_packaging(ctx: Context, settings: Settings, made: list[Path], args) -> int:
+    print("\n=== Phase 4: packaging (title, description, tags, chapters, thumbnail) ===")
+    for video_dir in made:
+        pkg, report, pkg_dir = package_video(ctx, video_dir)
+        _print_package(pkg, report, pkg_dir)
+        first = pkg.description.split("\n", 1)[0]
+        print(f"  line 1: {first[:70]}...")
+        if pkg.chapters:
+            print(
+                "  chapters: "
+                + " | ".join(f"{fmt_ts(c.start_s)} {c.title}" for c in pkg.chapters[:4])
+                + " | ..."
+            )
+        require_package(video_dir, settings.data_files())
+        print(f"  gate: OK, {video_dir.name} is upload-ready")
+        if report.status != "pass":
+            return 1
+
+    print("\n--- all five formats (preview from data) ---")
+    if cmd_package_preview(args, settings) != 0:
+        return 1
+
+    print("\n--- deliberately broken package (disclosure removed, invented number) ---")
+    good = made[0]
+    broken_dir = settings.paths.out / "demo" / "phase4" / "broken"
+    if broken_dir.exists():
+        shutil.rmtree(broken_dir)
+    shutil.copytree(good, broken_dir, ignore=shutil.ignore_patterns("video.mp4", "narration.wav"))
+    pkg_path = broken_dir / "package" / "package.json"
+    data = json.loads(pkg_path.read_text("utf-8"))
+    data["description"] = data["description"].split("\n", 2)[2].replace("₹20,000", "₹25,000", 1)
+    pkg_path.write_text(json.dumps(data, ensure_ascii=False, indent=2), "utf-8")
+    from channel.packaging import load_packaging
+    from channel.packaging.checks import check_package
+    from channel.packaging.models import Package
+
+    cfg = load_packaging(settings.paths.packaging)
+    brief = ctx.brief(
+        **{
+            "fmt": "best_under",
+            "params": {"band": 20000},
+            "as_of": ctx.settings.demo.as_of,
+            "lang": "hi",
+        }
+    )
+    report = check_package(
+        Package.model_validate(data),
+        cfg=cfg,
+        facts=ctx.facts(brief.as_of),
+        dataset=ctx.dataset,
+        factcheck_cfg=load_factcheck_config(settings.paths.factcheck),
+        months=ctx.script_text["hi"]["months"],
+        as_of=brief.as_of,
+        package_dir=broken_dir / "package",
+        product_ids=brief.product_ids,
+    )
+    print(report.summary())
+    if report.status != "fail":
+        print("  broken package was NOT caught — this is a bug", file=sys.stderr)
+        return 1
+    try:
+        require_package(broken_dir, settings.data_files())
+    except PackageBlocked as exc:
+        print(f"  gate: BLOCKED as expected — {exc}")
+        return 0
+    print("  gate: broken package was NOT blocked — this is a bug", file=sys.stderr)
+    return 1
 
 
 # ---------------------------------------------------------------------------- main
@@ -434,6 +552,14 @@ def build_parser() -> argparse.ArgumentParser:
     rn.add_argument("--tts", choices=("google", "espeak"), help="default: settings tts.provider")
     rn.add_argument("--keep-frames", action="store_true")
 
+    pk = sub.add_parser("package", help="title, description, tags, chapters, thumbnail for a video")
+    pk.add_argument("video", help="video id or folder (must be fact-checked; long-form rendered)")
+    pk.add_argument("--variant", type=int, default=0, help="which title variant (0 = default)")
+
+    pp = sub.add_parser("package-preview", help="packaging for all five formats from data alone")
+    pp.add_argument("--lang", choices=("hi", "en"))
+    pp.add_argument("--as-of")
+
     pf = sub.add_parser("proofs", help="Devanagari shaping proofs + five-format contact sheet")
     pf.add_argument("--as-of")
 
@@ -455,6 +581,8 @@ COMMANDS = {
     "costs": cmd_costs,
     "render": cmd_render,
     "proofs": cmd_proofs,
+    "package": cmd_package,
+    "package-preview": cmd_package_preview,
     "demo": cmd_demo,
 }
 

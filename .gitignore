@@ -13,3 +13,4 @@ assets/music/*
 secrets/
 assets/press/*
 !assets/press/.gitkeep
+.DS_Store

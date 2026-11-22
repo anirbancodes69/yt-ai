@@ -69,6 +69,14 @@ class LaunchInfo(Sourced):
     price_inr: Annotated[int, Field(gt=0)]
 
 
+class Listing(Sourced):
+    """A retailer's product page. ``url`` is the plain page; affiliate parameters are
+    added later from config/packaging.yaml and the environment, never stored here."""
+
+    retailer: str  # key into config/packaging.yaml affiliate.retailers
+    url: SourceUrl
+
+
 class Product(_Strict):
     id: Slug
     brand: str
@@ -78,6 +86,7 @@ class Product(_Strict):
     launch: LaunchInfo
     specs: dict[str, Spec]
     press_images: list[str] = Field(default_factory=list)
+    listings: list[Listing] = Field(default_factory=list)
 
     @property
     def display_name(self) -> str:
@@ -106,6 +115,8 @@ class Product(_Strict):
         _check_sample_url(self.sample, self.launch.source_url, self.id)
         for spec in self.specs.values():
             _check_sample_url(self.sample, spec.source_url, self.id)
+        for listing in self.listings:
+            _check_sample_url(self.sample, listing.url, self.id)
         return self
 
 

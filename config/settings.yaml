@@ -57,6 +57,7 @@ paths:
   factcheck: config/factcheck.yaml
   script_text: config/script_text.yaml
   render_text: config/render_text.yaml
+  packaging: config/packaging.yaml
   out: out
   cache: cache
   db: cache/channel.sqlite

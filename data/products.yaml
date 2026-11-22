@@ -103,6 +103,15 @@ products:
       source_url: https://example.com/sample/zentra-z5/specs
       fetched_at: '2026-11-18T10:00:00+05:30'
   press_images: []
+  listings:
+  - retailer: sample-store-a
+    url: https://example.com/sample/sample-store-a/zentra-z5
+    source_url: https://example.com/sample/sample-store-a/zentra-z5
+    fetched_at: '2026-11-18T10:00:00+05:30'
+  - retailer: sample-store-b
+    url: https://example.com/sample/sample-store-b/zentra-z5
+    source_url: https://example.com/sample/sample-store-b/zentra-z5
+    fetched_at: '2026-11-18T10:00:00+05:30'
 - id: kovix-k10
   brand: Kovix
   model: K10 5G
@@ -205,6 +214,15 @@ products:
       source_url: https://example.com/sample/kovix-k10/specs
       fetched_at: '2026-11-18T10:00:00+05:30'
   press_images: []
+  listings:
+  - retailer: sample-store-a
+    url: https://example.com/sample/sample-store-a/kovix-k10
+    source_url: https://example.com/sample/sample-store-a/kovix-k10
+    fetched_at: '2026-11-18T10:00:00+05:30'
+  - retailer: sample-store-b
+    url: https://example.com/sample/sample-store-b/kovix-k10
+    source_url: https://example.com/sample/sample-store-b/kovix-k10
+    fetched_at: '2026-11-18T10:00:00+05:30'
 - id: lumora-l3
   brand: Lumora
   model: L3
@@ -307,6 +325,15 @@ products:
       source_url: https://example.com/sample/lumora-l3/specs
       fetched_at: '2026-11-18T10:00:00+05:30'
   press_images: []
+  listings:
+  - retailer: sample-store-a
+    url: https://example.com/sample/sample-store-a/lumora-l3
+    source_url: https://example.com/sample/sample-store-a/lumora-l3
+    fetched_at: '2026-11-18T10:00:00+05:30'
+  - retailer: sample-store-b
+    url: https://example.com/sample/sample-store-b/lumora-l3
+    source_url: https://example.com/sample/sample-store-b/lumora-l3
+    fetched_at: '2026-11-18T10:00:00+05:30'
 - id: pravah-p7
   brand: Pravah
   model: P7
@@ -409,6 +436,15 @@ products:
       source_url: https://example.com/sample/pravah-p7/specs
       fetched_at: '2026-11-18T10:00:00+05:30'
   press_images: []
+  listings:
+  - retailer: sample-store-a
+    url: https://example.com/sample/sample-store-a/pravah-p7
+    source_url: https://example.com/sample/sample-store-a/pravah-p7
+    fetched_at: '2026-11-18T10:00:00+05:30'
+  - retailer: sample-store-b
+    url: https://example.com/sample/sample-store-b/pravah-p7
+    source_url: https://example.com/sample/sample-store-b/pravah-p7
+    fetched_at: '2026-11-18T10:00:00+05:30'
 - id: tarang-t9
   brand: Tarang
   model: T9
@@ -511,6 +547,15 @@ products:
       source_url: https://example.com/sample/tarang-t9/specs
       fetched_at: '2026-11-18T10:00:00+05:30'
   press_images: []
+  listings:
+  - retailer: sample-store-a
+    url: https://example.com/sample/sample-store-a/tarang-t9
+    source_url: https://example.com/sample/sample-store-a/tarang-t9
+    fetched_at: '2026-11-18T10:00:00+05:30'
+  - retailer: sample-store-b
+    url: https://example.com/sample/sample-store-b/tarang-t9
+    source_url: https://example.com/sample/sample-store-b/tarang-t9
+    fetched_at: '2026-11-18T10:00:00+05:30'
 - id: ostra-o2
   brand: Ostra
   model: O2
@@ -613,6 +658,15 @@ products:
       source_url: https://example.com/sample/ostra-o2/specs
       fetched_at: '2026-11-18T10:00:00+05:30'
   press_images: []
+  listings:
+  - retailer: sample-store-a
+    url: https://example.com/sample/sample-store-a/ostra-o2
+    source_url: https://example.com/sample/sample-store-a/ostra-o2
+    fetched_at: '2026-11-18T10:00:00+05:30'
+  - retailer: sample-store-b
+    url: https://example.com/sample/sample-store-b/ostra-o2
+    source_url: https://example.com/sample/sample-store-b/ostra-o2
+    fetched_at: '2026-11-18T10:00:00+05:30'
 - id: zentra-z8-pro
   brand: Zentra
   model: Z8 Pro
@@ -715,6 +769,15 @@ products:
       source_url: https://example.com/sample/zentra-z8-pro/specs
       fetched_at: '2026-11-18T10:00:00+05:30'
   press_images: []
+  listings:
+  - retailer: sample-store-a
+    url: https://example.com/sample/sample-store-a/zentra-z8-pro
+    source_url: https://example.com/sample/sample-store-a/zentra-z8-pro
+    fetched_at: '2026-11-18T10:00:00+05:30'
+  - retailer: sample-store-b
+    url: https://example.com/sample/sample-store-b/zentra-z8-pro
+    source_url: https://example.com/sample/sample-store-b/zentra-z8-pro
+    fetched_at: '2026-11-18T10:00:00+05:30'
 - id: lumora-l9-ultra
   brand: Lumora
   model: L9 Ultra
@@ -817,3 +880,12 @@ products:
       source_url: https://example.com/sample/lumora-l9-ultra/specs
       fetched_at: '2026-11-18T10:00:00+05:30'
   press_images: []
+  listings:
+  - retailer: sample-store-a
+    url: https://example.com/sample/sample-store-a/lumora-l9-ultra
+    source_url: https://example.com/sample/sample-store-a/lumora-l9-ultra
+    fetched_at: '2026-11-18T10:00:00+05:30'
+  - retailer: sample-store-b
+    url: https://example.com/sample/sample-store-b/lumora-l9-ultra
+    source_url: https://example.com/sample/sample-store-b/lumora-l9-ultra
+    fetched_at: '2026-11-18T10:00:00+05:30'

@@ -29,6 +29,7 @@ class Paths(_Cfg):
     factcheck: Path
     script_text: Path
     render_text: Path
+    packaging: Path
     out: Path
     cache: Path
     db: Path

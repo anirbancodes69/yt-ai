@@ -45,7 +45,7 @@ from channel.render.frames import (
 )
 from channel.render.shots import Shot, plan_shots
 from channel.render.theme import theme_for
-from channel.scripts.models import Script
+from channel.scripts.models import Brief, Script
 from channel.scripts.pipeline import Context
 from channel.store import Budget, Store
 from channel.voice import CachedTTS, TTSProvider, build_narration, make_provider
@@ -70,7 +70,10 @@ def load_render_text(path: Path) -> dict:
 
 
 def render_data(ctx: Context, script: Script) -> RenderData:
-    brief = script.brief
+    return render_data_for(ctx, script.brief)
+
+
+def render_data_for(ctx: Context, brief: Brief) -> RenderData:
     s = ctx.settings
     text = ctx.script_text
     rtext = load_render_text(s.paths.render_text)

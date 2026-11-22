@@ -310,6 +310,15 @@ def products_yaml() -> str:
                     for k, v in specs.items()
                 },
                 "press_images": [],
+                "listings": [
+                    {
+                        "retailer": retailer,
+                        "url": f"https://example.com/sample/{retailer}/{pid}",
+                        "source_url": f"https://example.com/sample/{retailer}/{pid}",
+                        "fetched_at": SPEC_FETCHED,
+                    }
+                    for retailer in RETAILERS
+                ],
             }
         )
     header = (

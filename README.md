@@ -13,8 +13,8 @@ See [docs/PLAN.md](docs/PLAN.md) for the full plan, assumptions and open questio
 |---|---|---|
 | 1 | Data models, price providers, scoring, SAMPLE dataset | ✅ done |
 | 2 | Claude script generation + fact-check | ✅ done |
-| 3 | TTS + rendering + `make demo` video | ✅ done, awaiting review |
-| 4 | Packaging (title, description, thumbnail) | not started |
+| 3 | TTS + rendering + `make demo` video | ✅ done |
+| 4 | Packaging (title, description, thumbnail) | ✅ done, awaiting review |
 | 5 | Topic engine + YouTube upload | not started |
 | 6 | Scheduling + analytics | not started |
 
@@ -55,6 +55,10 @@ docker compose run --rm app channel costs                     # this month's API
 # Voice + render (Phase 3). Only fact-checked scripts can be rendered.
 docker compose run --rm app channel render best_under-20000-2026-11-20-hi --tts espeak
 docker compose run --rm app channel proofs                    # Devanagari proofs + format contact sheet
+
+# Packaging (Phase 4). Needs a fact-checked script; long-form must be rendered (for chapters).
+docker compose run --rm app channel package best_under-20000-2026-11-20-hi
+docker compose run --rm app channel package-preview           # all five formats from data alone
 ```
 
 The template writer (`--writer template`) supports `best_under` and `deal_short`
@@ -68,6 +72,7 @@ docker-compose.yml      `app` service, repo mounted at /app, .env loaded if pres
 config/settings.yaml    language, model, price provider, paths, budget, demo date
 config/scoring.yaml     the scoring method (see docs/SCORING.md)
 config/formats.yaml     price bands, words-per-minute, the five video formats
+config/packaging.yaml   disclosure, titles, descriptions, tags, affiliate retailers, YouTube limits
 config/render_text.yaml  on-screen strings and TTS pronunciation (hi, en)
 config/factcheck.yaml   banned hands-on phrases, allowed tokens, negation words
 config/script_text.yaml disclosure / method note / SAMPLE notice wording (hi, en)
@@ -81,6 +86,7 @@ src/channel/factcheck/  fact-checker and the publishing gate
 src/channel/voice/      TTSProvider (Google Cloud, espeak), cache + cost, timed narration
 src/channel/render/     fonts (raqm), frames, themes, shots, captions, ffmpeg assembly
 assets/{press,music,fonts}/  your official press images, music, optional font overrides
+src/channel/packaging/  title/description/tags/chapters/links, package checker, thumbnails, upload gate
 src/channel/store.py    SQLite: API response cache, cost ledger, budget guard
 src/channel/cli.py      `channel` command
 tests/                  pytest
@@ -118,6 +124,13 @@ tests/                  pytest
   distinct themes. Every frame has "price as of <date>"; SAMPLE data is watermarked on every frame.
 - `assets/music/` files are mixed under the voice and ducked while it speaks.
 - Full detail: [docs/RENDER.md](docs/RENDER.md).
+
+## Packaging (summary)
+- Everything is built by code (no API cost). Description line 1 is the affiliate disclosure, exactly;
+  links get their affiliate parameter from `.env`; chapters come from the real narration timeline.
+- The package check enforces YouTube's limits (description is 5000 *bytes*, Devanagari = 3 bytes/char)
+  and re-verifies every number against the data. `require_package()` is the upload gate.
+- Full detail: [docs/PACKAGING.md](docs/PACKAGING.md).
 
 ## Language
 `CHANNEL_LANG=hi|en` (default `hi` from settings). `LANG=hi|en` also works, but

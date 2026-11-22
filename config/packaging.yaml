@@ -1,0 +1,163 @@
+# Packaging: title, description, tags, chapters, thumbnail text, affiliate links.
+# Everything here is wording and rules. Numbers are never written here: {placeholders}
+# are filled from the fact table, and every number in the result is re-verified.
+
+category_id: 28                 # YouTube "Science & Technology"
+made_for_kids: false
+# Realistic synthetic voice: disclose as altered/synthetic content (conservative default).
+contains_synthetic_media: true
+
+limits:
+  title_chars: 100              # YouTube hard limit
+  title_soft_chars: 70          # longer titles get cut off in search results (warning)
+  description_bytes: 5000       # YouTube limit is in UTF-8 BYTES (Devanagari = 3 bytes/char)
+  tags_chars: 500
+  tag_chars: 30
+  hashtags_max: 15              # YouTube ignores all hashtags if there are more than 15
+  chapter_min_seconds: 10
+  chapter_min_count: 3
+  thumbnail_bytes: 2000000      # YouTube limit is 2 MB
+
+# ---------------------------------------------------------------- affiliate links
+# Affiliate IDs come from the environment (.env), never from this file or the data.
+# A listing's retailer must be a key here. `sample_value` is used ONLY for SAMPLE data.
+affiliate:
+  retailers:
+    amazon:
+      label: Amazon
+      param: tag
+      env: AMAZON_ASSOCIATES_TAG
+    flipkart:
+      label: Flipkart
+      param: affid
+      env: FLIPKART_AFFILIATE_ID
+    sample-store-a:
+      label: Sample Store A
+      param: ref
+      env: SAMPLE_AFFILIATE_TAG
+      sample_value: sample-tag
+    sample-store-b:
+      label: Sample Store B
+      param: ref
+      env: SAMPLE_AFFILIATE_TAG
+      sample_value: sample-tag
+
+hi:
+  disclosure: >-
+    डिस्क्लोज़र: इस डिस्क्रिप्शन में एफिलिएट लिंक हैं। इनसे खरीदने पर हमें कमीशन मिल सकता है,
+    और आपके लिए कीमत नहीं बढ़ती।
+  sample_notice: "सैंपल डेटा: ये काल्पनिक प्रोडक्ट और कीमतें हैं, असली नहीं।"
+  title_sample_prefix: "[SAMPLE] "
+  links_heading: "फ़ोन्स के लिंक (एफिलिएट लिंक):"
+  link_line: "• {name} — {price} ({price_as_of}) — {retailer}: {url}"
+  link_line_no_price: "• {name} — {retailer}: {url}"
+  chapters_heading: "चैप्टर्स:"
+  price_as_of: "कीमत {date} तक"
+  price_note: "सभी कीमतें {date} तक की हैं और बदल सकती हैं।"
+  chapter_intro: "परिचय"
+  titles:
+    best_under:
+      - "{band} के अंदर बेस्ट स्मार्टफ़ोन ({month_year})"
+      - "{band} में कौन-सा फ़ोन लें? टॉप {count} की रैंकिंग"
+    head_to_head:
+      - "{a} बनाम {b}: कौन-सा फ़ोन बेहतर?"
+      - "{a} या {b}? स्पेक्स और कीमत की तुलना"
+    launch_explainer:
+      - "{product} लॉन्च: कीमत {price}, क्या खरीदें?"
+      - "{product} के स्पेक्स, कीमत और रैंकिंग"
+    deal_short:
+      - "{product} की कीमत गिरी: अब {price}!"
+      - "{product} प्राइस ड्रॉप: {drop} सस्ता"
+    monthly_refresh:
+      - "{band} के अंदर बेस्ट फ़ोन: {month_year} अपडेट"
+      - "{month_year}: {band} में कौन-सा फ़ोन सबसे आगे?"
+  summaries:
+    best_under: "{band} के अंदर हमारी रैंकिंग में #1 है {winner} ({winner_price})। कुल {count} फ़ोन्स को स्पेसिफिकेशन और कीमत पर परखा गया।"
+    head_to_head: "{a} बनाम {b}: हमारे स्कोर में आगे है {verdict}।"
+    launch_explainer: "{product} की मौजूदा कीमत {price} है। हमने इसे {band} की रैंकिंग में रखकर देखा।"
+    deal_short: "{product} की कीमत {high} से गिरकर {price} हुई है, यानी {drop} कम।"
+    monthly_refresh: "{month_year} में {band} के अंदर सबसे आगे है {winner} ({winner_price})।"
+  verdict_tie: "बराबरी (टाई)"
+  hashtags:
+    best_under: ["#स्मार्टफ़ोन", "#बेस्टफ़ोन", "#फ़ोनगाइड"]
+    head_to_head: ["#स्मार्टफ़ोन", "#फ़ोनकम्पैरिज़न", "#फ़ोनगाइड"]
+    launch_explainer: ["#नयाफ़ोन", "#फ़ोनलॉन्च", "#स्मार्टफ़ोन"]
+    deal_short: ["#Shorts", "#फ़ोनडील", "#प्राइसड्रॉप"]
+    monthly_refresh: ["#स्मार्टफ़ोन", "#बेस्टफ़ोन", "#मंथलीअपडेट"]
+  tags:
+    common: ["स्मार्टफ़ोन", "बेस्ट फ़ोन", "फ़ोन गाइड", "फ़ोन खरीदने की गाइड", "smartphone guide india"]
+    best_under: ["best phone under {band_plain}", "बेस्ट फ़ोन {band_plain} के अंदर"]
+    head_to_head: ["phone comparison", "फ़ोन कम्पैरिज़न"]
+    launch_explainer: ["new phone launch india", "फ़ोन लॉन्च"]
+    deal_short: ["phone deal", "price drop", "फ़ोन डील"]
+    monthly_refresh: ["best phones this month", "मंथली अपडेट"]
+  thumbnail:
+    best_under_head: "{band} के अंदर"
+    best_under_sub: "बेस्ट फ़ोन?"
+    head_to_head_head: "कौन बेहतर?"
+    launch_explainer_head: "लॉन्च!"
+    launch_explainer_sub: "क्या खरीदें?"
+    deal_short_head: "प्राइस ड्रॉप!"
+    monthly_refresh_head: "{month_year}"
+    monthly_refresh_sub: "{band} के अंदर कौन आगे?"
+    badge_rank: "#{rank}"
+
+en:
+  disclosure: >-
+    Disclosure: this description contains affiliate links. If you buy through them we may earn
+    a commission, at no extra cost to you.
+  sample_notice: "Sample data: these are fictional products and prices, not real."
+  title_sample_prefix: "[SAMPLE] "
+  links_heading: "Phone links (affiliate links):"
+  link_line: "• {name} — {price} ({price_as_of}) — {retailer}: {url}"
+  link_line_no_price: "• {name} — {retailer}: {url}"
+  chapters_heading: "Chapters:"
+  price_as_of: "price as of {date}"
+  price_note: "All prices are as of {date} and may change."
+  chapter_intro: "Intro"
+  titles:
+    best_under:
+      - "Best Phone Under {band} ({month_year})"
+      - "Which Phone Under {band}? Top {count} Ranked"
+    head_to_head:
+      - "{a} vs {b}: Which Phone Is Better?"
+      - "{a} or {b}? Specs and Price Compared"
+    launch_explainer:
+      - "{product} Launched at {price}: Should You Buy?"
+      - "{product}: Specs, Price and Ranking"
+    deal_short:
+      - "{product} Price Drop: Now {price}!"
+      - "{product} Deal: {drop} Cheaper"
+    monthly_refresh:
+      - "Best Phones Under {band}: {month_year} Update"
+      - "{month_year}: Which Phone Leads Under {band}?"
+  summaries:
+    best_under: "Under {band}, #1 in our ranking is the {winner} ({winner_price}). We ranked {count} phones on specs and price."
+    head_to_head: "{a} vs {b}: ahead in our score is {verdict}."
+    launch_explainer: "The {product} is currently {price}. We ranked it in the {band} price band."
+    deal_short: "The {product} dropped from {high} to {price}, that is {drop} less."
+    monthly_refresh: "In {month_year}, the leader under {band} is the {winner} ({winner_price})."
+  verdict_tie: "a tie"
+  hashtags:
+    best_under: ["#smartphone", "#bestphone", "#phoneguide"]
+    head_to_head: ["#smartphone", "#phonecomparison", "#phoneguide"]
+    launch_explainer: ["#newphone", "#phonelaunch", "#smartphone"]
+    deal_short: ["#Shorts", "#phonedeal", "#pricedrop"]
+    monthly_refresh: ["#smartphone", "#bestphone", "#monthlyupdate"]
+  tags:
+    common: ["smartphone", "best phone", "phone guide", "phone buying guide", "smartphone guide india"]
+    best_under: ["best phone under {band_plain}"]
+    head_to_head: ["phone comparison"]
+    launch_explainer: ["new phone launch india"]
+    deal_short: ["phone deal", "price drop"]
+    monthly_refresh: ["best phones this month"]
+  thumbnail:
+    best_under_head: "Under {band}"
+    best_under_sub: "BEST PHONE?"
+    head_to_head_head: "WHICH WINS?"
+    launch_explainer_head: "JUST LAUNCHED"
+    launch_explainer_sub: "Should you buy?"
+    deal_short_head: "PRICE DROP!"
+    monthly_refresh_head: "{month_year}"
+    monthly_refresh_sub: "Who leads under {band}?"
+    badge_rank: "#{rank}"
