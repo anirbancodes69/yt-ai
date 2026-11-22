@@ -8,10 +8,11 @@ import sys
 from datetime import date
 from pathlib import Path
 
-import yaml
-
 from channel.config import Settings, load_settings
 from channel.data import DataError, Dataset, PriceProviderError, load_dataset, make_provider
+from channel.factcheck import FactCheckBlocked, require_passed
+from channel.fmt import inr, num
+from channel.formats import FORMAT_NAMES, load_formats
 from channel.scoring import (
     BandRanking,
     Comparison,
@@ -23,6 +24,12 @@ from channel.scoring import (
     rank_band,
     score_product,
 )
+from channel.scripts.briefs import BriefError
+from channel.scripts.llm import AnthropicScriptLLM, CachedLLM, ScriptGenerationError
+from channel.scripts.models import Script
+from channel.scripts.pipeline import Context, FactCheckFailed, fact_check, generate, recheck
+from channel.scripts.templates import TemplateUnsupported
+from channel.store import Budget, BudgetExceeded, Store
 
 SAMPLE_BANNER = "*** SAMPLE DATA — fictional products and invented prices, not real ***"
 
@@ -35,8 +42,7 @@ def _context(settings: Settings) -> tuple[Dataset, ScoringConfig]:
 
 
 def _bands(settings: Settings) -> list[int]:
-    raw = yaml.safe_load(settings.paths.formats.read_text(encoding="utf-8"))
-    return [int(b) for b in raw["price_bands_inr"]]
+    return list(load_formats(settings.paths.formats).price_bands_inr)
 
 
 def _as_of(args: argparse.Namespace, settings: Settings, dataset: Dataset) -> date:
@@ -46,19 +52,7 @@ def _as_of(args: argparse.Namespace, settings: Settings, dataset: Dataset) -> da
     return settings.demo.as_of if dataset.is_sample else date.today()
 
 
-def _inr(n: int) -> str:
-    """Indian digit grouping: 1234567 -> 12,34,567."""
-    s = str(n)
-    if len(s) <= 3:
-        return f"₹{s}"
-    head, tail = s[:-3], s[-3:]
-    groups = []
-    while len(head) > 2:
-        groups.insert(0, head[-2:])
-        head = head[:-2]
-    if head:
-        groups.insert(0, head)
-    return "₹" + ",".join([*groups, tail])
+_inr = inr
 
 
 # ---------------------------------------------------------------------------- printing
@@ -152,8 +146,8 @@ def cmd_compare(args: argparse.Namespace, settings: Settings) -> int:
     return 0
 
 
-def cmd_demo(args: argparse.Namespace, settings: Settings) -> int:
-    """Phase 1 demo: validate, rank every band, one head-to-head; write JSON to out/demo/."""
+def cmd_rankings(args: argparse.Namespace, settings: Settings) -> int:
+    """Rank every band and one head-to-head; write JSON to out/demo/phase1/."""
     dataset, cfg = _context(settings)
     as_of = _as_of(args, settings, dataset)
     out = Path(settings.paths.out) / "demo" / "phase1"
@@ -188,6 +182,145 @@ def cmd_demo(args: argparse.Namespace, settings: Settings) -> int:
     return 0
 
 
+# ------------------------------------------------------------------- scripts (phase 2)
+
+
+def _script_params(args: argparse.Namespace) -> dict[str, str | int]:
+    need = {
+        "best_under": ("band",),
+        "monthly_refresh": ("band",),
+        "head_to_head": ("a", "b"),
+        "launch_explainer": ("product",),
+        "deal_short": ("product",),
+    }[args.format]
+    params: dict[str, str | int] = {}
+    for k in need:
+        v = getattr(args, k)
+        if v is None:
+            raise ValueError(f"format {args.format} needs --{k}")
+        params[k] = v
+    return params
+
+
+def make_llm(settings: Settings, store: Store) -> CachedLLM:
+    return CachedLLM(
+        AnthropicScriptLLM(
+            model=settings.llm.model, effort=settings.llm.effort, max_tokens=settings.llm.max_tokens
+        ),
+        store=store,
+        budget=Budget(settings.budget.monthly_inr, settings.budget.per_video_inr),
+        pricing=settings.pricing_usd_per_mtok,
+        usd_to_inr=settings.budget.usd_to_inr,
+    )
+
+
+def cmd_script(args: argparse.Namespace, settings: Settings) -> int:
+    ctx = Context.load(settings)
+    as_of = _as_of(args, settings, ctx.dataset)
+    brief = ctx.brief(args.format, _script_params(args), as_of, args.lang or settings.lang)
+    store = Store(settings.paths.db)
+    try:
+        llm = make_llm(settings, store) if args.writer == "llm" else None
+        _script, report, video_dir = generate(ctx, brief, writer=args.writer, llm=llm)
+    except FactCheckFailed as exc:
+        print(exc.report.summary())
+        print(f"BLOCKED — report written to {exc.video_dir}/factcheck.json", file=sys.stderr)
+        return 1
+    finally:
+        spent = store.video_spend_inr(brief.video_id)
+        store.close()
+    print(report.summary())
+    print(f"wrote {video_dir}/  (API cost for this video so far: ₹{spent:.2f})")
+    return 0
+
+
+def cmd_factcheck(args: argparse.Namespace, settings: Settings) -> int:
+    ctx = Context.load(settings)
+    report, _ = recheck(ctx, Path(args.script))
+    print(report.summary())
+    return 0 if report.status == "pass" else 1
+
+
+def cmd_costs(args: argparse.Namespace, settings: Settings) -> int:
+    store = Store(settings.paths.db)
+    try:
+        if args.video:
+            for row in store.video_costs(args.video):
+                print(
+                    f"{row['created_at'][:19]} {row['operation']:<14} {row['model'] or '-':<18} "
+                    f"in={row['input_tokens']} out={row['output_tokens']} "
+                    f"₹{row['inr']:.2f}{' (cached)' if row['cached'] else ''}"
+                )
+            print(f"total ₹{store.video_spend_inr(args.video):.2f}")
+        else:
+            month = args.month
+            for row in store.month_by_video(month):
+                print(
+                    f"{row['video_id']:<48} calls={row['calls']} cached={row['cached_calls']} "
+                    f"₹{row['inr']:.2f}"
+                )
+            total = store.month_spend_inr(month)
+            print(f"month total ₹{total:.2f} of ₹{settings.budget.monthly_inr:.0f} budget")
+    finally:
+        store.close()
+    return 0
+
+
+def _tamper(script: Script) -> Script:
+    """Deliberately wrong copy for the demo: a wrong price, an invented number and a
+    hands-on claim."""
+    data = json.loads(script.model_dump_json())
+    for sec in data["sections"]:
+        if sec["source"] != "writer" or sec["kind"] != "product":
+            continue
+        for c in sec["claims"]:
+            if c["ref"].endswith(".current"):
+                wrong = c["text"].replace(num(c["value"]), num(c["value"] - 1000))
+                sec["narration"] = sec["narration"].replace(c["text"], wrong, 1)
+                c["text"], c["value"] = wrong, c["value"] - 1000
+                break
+        sec["narration"] += " हमने टेस्ट किया तो बैटरी 2 दिन चली।"
+        break
+    return Script.model_validate(data)
+
+
+def cmd_demo(args: argparse.Namespace, settings: Settings) -> int:
+    """Current phase demo: rankings, then template scripts + fact-check + a blocked fake."""
+    if cmd_rankings(args, settings) != 0:
+        return 1
+    print("\n=== Phase 2: scripts + fact-check (template writer, no API key needed) ===")
+    ctx = Context.load(settings)
+    as_of = _as_of(args, settings, ctx.dataset)
+    lang = settings.lang
+    made = []
+    for fmt, params in (("best_under", {"band": 20000}), ("deal_short", {"product": "ostra-o2"})):
+        _s, report, video_dir = generate(
+            ctx, ctx.brief(fmt, params, as_of, lang), writer="template"
+        )
+        print(report.summary())
+        require_passed(video_dir, settings.data_files())
+        print(f"  gate: OK, render/upload allowed for {video_dir.name}")
+        made.append(video_dir)
+
+    print("\n--- deliberately wrong copy (wrong price, invented number, hands-on claim) ---")
+    good = Script.model_validate_json((made[0] / "script.json").read_text("utf-8"))
+    bad = _tamper(good)
+    bad_dir = settings.paths.out / "demo" / "phase2" / "tampered"
+    bad_dir.mkdir(parents=True, exist_ok=True)
+    report = fact_check(ctx, bad)
+    (bad_dir / "script.json").write_text(bad.model_dump_json(indent=2), "utf-8")
+    (bad_dir / "factcheck.json").write_text(report.model_dump_json(indent=2), "utf-8")
+    print(report.summary())
+    try:
+        require_passed(bad_dir, settings.data_files())
+    except FactCheckBlocked as exc:
+        print(f"  gate: BLOCKED as expected — {exc}")
+    else:
+        print("  gate: tampered script was NOT blocked — this is a bug", file=sys.stderr)
+        return 1
+    return 0
+
+
 # ---------------------------------------------------------------------------- main
 
 
@@ -211,6 +344,26 @@ def build_parser() -> argparse.ArgumentParser:
     c.add_argument("b")
     c.add_argument("--json", action="store_true")
 
+    rk = sub.add_parser("rankings", help="rank every band + one head-to-head (JSON to out/)")
+    rk.add_argument("--as-of")
+
+    sc = sub.add_parser("script", help="write + fact-check a script for one video")
+    sc.add_argument("format", choices=FORMAT_NAMES)
+    sc.add_argument("--band", type=int)
+    sc.add_argument("--product")
+    sc.add_argument("--a")
+    sc.add_argument("--b")
+    sc.add_argument("--writer", choices=("llm", "template"), default="llm")
+    sc.add_argument("--lang", choices=("hi", "en"))
+    sc.add_argument("--as-of")
+
+    fc = sub.add_parser("factcheck", help="re-run the fact-check on a saved script.json")
+    fc.add_argument("script")
+
+    co = sub.add_parser("costs", help="API cost ledger")
+    co.add_argument("--month", help="YYYY-MM (default: current month)")
+    co.add_argument("--video")
+
     d = sub.add_parser("demo", help="run the current phase's end-to-end demo")
     d.add_argument("--as-of")
     return p
@@ -221,6 +374,10 @@ COMMANDS = {
     "score": cmd_score,
     "rank": cmd_rank,
     "compare": cmd_compare,
+    "rankings": cmd_rankings,
+    "script": cmd_script,
+    "factcheck": cmd_factcheck,
+    "costs": cmd_costs,
     "demo": cmd_demo,
 }
 
@@ -230,7 +387,18 @@ def main(argv: list[str] | None = None) -> int:
     try:
         settings = load_settings()
         return COMMANDS[args.command](args, settings)
-    except (DataError, PriceProviderError, ScoringError, KeyError, ValueError) as exc:
+    except (
+        DataError,
+        PriceProviderError,
+        ScoringError,
+        BriefError,
+        TemplateUnsupported,
+        ScriptGenerationError,
+        BudgetExceeded,
+        FactCheckBlocked,
+        KeyError,
+        ValueError,
+    ) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
 

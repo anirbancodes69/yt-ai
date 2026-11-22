@@ -1,0 +1,65 @@
+# Fact-check rules. Writer sections (LLM or template) are checked against these;
+# system sections (disclosure, method, sample notice) must match config exactly.
+
+# Phrases that imply hands-on testing. Matching is case-insensitive substring.
+banned_phrases:
+  hi:
+    - मैंने इस्तेमाल
+    - मैंने यूज़
+    - मैंने यूज
+    - हमने इस्तेमाल
+    - हमने यूज़
+    - हमने यूज
+    - हमने टेस्ट
+    - मैंने टेस्ट
+    - हमारे टेस्ट
+    - हमारी टेस्टिंग
+    - मेरी टेस्टिंग
+    - हाथ में लेकर
+    - हैंड्स-ऑन
+    - हैंड्स ऑन
+    - मेरे अनुभव
+    - हमारे अनुभव
+    - इस्तेमाल करने के बाद
+    - यूज़ करने के बाद
+    - रिव्यू यूनिट
+  en:
+    - hands-on
+    - hands on
+    - i tested
+    - we tested
+    - i used
+    - we used
+    - in my testing
+    - in our testing
+    - my experience
+    - our experience
+    - after using
+    - review unit
+    - i've been using
+    - we've been using
+
+# Tokens whose digits are not factual claims. Product names and chipset names
+# from the dataset are added automatically.
+allowed_tokens:
+  - AnTuTu v10
+  - 5G
+  - 4G
+
+# Words that express absence. A claim with value false (or 0) must contain one;
+# a claim with value true must not.
+negation_words:
+  hi: [नहीं, बिना]
+  en: ["no ", "not ", "without", "n't", "lacks"]
+
+# A string claim's text must contain its value, or one of these aliases.
+value_aliases:
+  none: [नहीं, "no ", "without"]
+
+# Number words multiplied onto the preceding number ("7.2 लाख" = 720000).
+multipliers:
+  लाख: 100000
+  lakh: 100000
+  हज़ार: 1000
+  हजार: 1000
+  thousand: 1000

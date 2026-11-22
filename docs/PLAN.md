@@ -1,6 +1,6 @@
 # PLAN — Automated Hindi buying-guide channel
 
-Status: Phase 1 complete, awaiting review. Each phase ends with a stop for review.
+Status: Phase 2 complete, awaiting review. Each phase ends with a stop for review.
 
 ## 1. What I understand we are building
 
@@ -116,7 +116,13 @@ products.yaml + prices.csv (via PriceProvider)
 - `make demo` (Phase 1 form): validate data, write rankings for every band to
   `out/demo/`.
 
-### Phase 2 — Script generation and fact-check
+### Phase 2 — Script generation and fact-check  ✅
+Decisions taken: a deterministic template writer (best_under, deal_short) for
+offline demo/tests and as a budget fallback; claims cite a fact table rebuilt
+independently by the checker; disclosure/method/SAMPLE text inserted by code;
+refusal fallback (`fallbacks: "default"`) enabled on Claude calls. Details in
+docs/FACTCHECK.md.
+
 - Script JSON schema (pydantic) → `output_config.format` structured output.
 - Claims: `{text, data_ref: "products.<id>.specs.battery_mah", value}`; prices
   reference a specific PricePoint.

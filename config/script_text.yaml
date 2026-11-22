@@ -1,0 +1,42 @@
+# Fixed, code-inserted narration. Writers (LLM or template) never produce these;
+# the fact-checker requires them verbatim. {date} = price date.
+
+hi:
+  months: [जनवरी, फ़रवरी, मार्च, अप्रैल, मई, जून, जुलाई, अगस्त, सितंबर, अक्टूबर, नवंबर, दिसंबर]
+  headings:
+    disclosure: डिस्क्लोज़र
+    method: हमारा तरीका
+    sample_notice: सैंपल डेटा
+  long:
+    disclosure: >-
+      एक ज़रूरी बात: इस वीडियो के डिस्क्रिप्शन में एफिलिएट लिंक हैं। अगर आप इनसे
+      खरीदते हैं, तो हमें थोड़ा कमीशन मिल सकता है, और आपकी कीमत पर कोई फ़र्क नहीं पड़ता।
+    method: >-
+      यह वीडियो स्पेसिफिकेशन, कीमतों और प्रकाशित रिव्यूज़ पर आधारित है। हमने इन फ़ोन्स को
+      खुद इस्तेमाल करके नहीं परखा है। सभी कीमतें {date} तक की हैं और बदल सकती हैं।
+    sample_notice: >-
+      ध्यान दें: इस वीडियो का डेटा सैंपल है। ये असली प्रोडक्ट या असली कीमतें नहीं हैं।
+  short:
+    disclosure: डिस्क्रिप्शन में एफिलिएट लिंक हैं, इनसे हमें कमीशन मिल सकता है।
+    method: स्पेसिफिकेशन और कीमतों पर आधारित, कीमत {date} की।
+    sample_notice: यह सैंपल डेटा है, असली प्रोडक्ट नहीं।
+
+en:
+  months: [January, February, March, April, May, June, July, August, September, October, November, December]
+  headings:
+    disclosure: Disclosure
+    method: How we rank
+    sample_notice: Sample data
+  long:
+    disclosure: >-
+      Quick note: the description has affiliate links. If you buy through them we may
+      earn a small commission, at no extra cost to you.
+    method: >-
+      This video is based on specifications, prices and published reviews. We have not
+      tested these phones ourselves. All prices are as of {date} and may change.
+    sample_notice: >-
+      Please note: this video uses sample data. These are not real products or real prices.
+  short:
+    disclosure: Affiliate links in the description; we may earn a commission.
+    method: Based on specs and prices, price as of {date}.
+    sample_notice: This is sample data, not a real product.

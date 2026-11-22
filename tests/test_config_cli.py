@@ -31,7 +31,7 @@ def test_bad_channel_lang() -> None:
 def test_settings_paths_are_absolute() -> None:
     s = load_settings(REPO_ROOT, env={"CHANNEL_LLM_MODEL": "claude-haiku-5-5"})
     assert s.paths.products.is_absolute() and s.paths.products.exists()
-    assert s.llm_model == "claude-haiku-5-5"
+    assert s.llm.model == "claude-haiku-5-5"
     assert s.lang == "hi"
 
 
@@ -45,7 +45,8 @@ def test_inr_grouping(n, out) -> None:
 @pytest.fixture
 def tmp_out(monkeypatch, tmp_path: Path):
     real = load_settings(REPO_ROOT, env={})
-    patched = real.model_copy(update={"paths": real.paths.model_copy(update={"out": tmp_path})})
+    paths = real.paths.model_copy(update={"out": tmp_path, "db": tmp_path / "db.sqlite"})
+    patched = real.model_copy(update={"paths": paths})
     monkeypatch.setattr(cli, "load_settings", lambda: patched)
     return tmp_path
 
@@ -73,3 +74,35 @@ def test_cli_demo_writes_outputs(tmp_out, capsys) -> None:
     files = {p.name for p in (tmp_out / "demo" / "phase1").iterdir()}
     assert {f"best_under_{b}.json" for b in (10000, 15000, 20000, 30000, 50000)} <= files
     assert "scores.json" in files
+    out = capsys.readouterr().out
+    assert "BLOCKED as expected" in out
+    assert (tmp_out / "videos" / "best_under-20000-2026-11-20-hi" / "factcheck.json").exists()
+
+
+def test_cli_script_template_and_factcheck(tmp_out, capsys) -> None:
+    assert cli.main(["script", "deal_short", "--product", "ostra-o2", "--writer", "template"]) == 0
+    path = tmp_out / "videos" / "deal_short-ostra-o2-2026-11-20-hi" / "script.json"
+    assert cli.main(["factcheck", str(path)]) == 0
+    data = json.loads(path.read_text())
+    data["sections"][-1]["narration"] += " 99"
+    path.write_text(json.dumps(data, ensure_ascii=False))
+    assert cli.main(["factcheck", str(path)]) == 1
+    assert "unbacked_number" in capsys.readouterr().out
+
+
+def test_cli_script_missing_param(tmp_out, capsys) -> None:
+    assert cli.main(["script", "best_under", "--writer", "template"]) == 2
+    assert "needs --band" in capsys.readouterr().err
+
+
+def test_cli_template_unsupported_format(tmp_out, capsys) -> None:
+    rc = cli.main(
+        ["script", "head_to_head", "--a", "tarang-t9", "--b", "ostra-o2", "--writer", "template"]
+    )
+    assert rc == 2
+    assert "--writer llm" in capsys.readouterr().err
+
+
+def test_cli_costs_empty(tmp_out, capsys) -> None:
+    assert cli.main(["costs"]) == 0
+    assert "month total ₹0.00" in capsys.readouterr().out

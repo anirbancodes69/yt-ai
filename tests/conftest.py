@@ -38,3 +38,12 @@ def make_product(
     for k, v in spec_values.items():
         d["specs"][k]["value"] = v
     return Product.model_validate(d)
+
+
+@pytest.fixture
+def tmp_settings(settings: Settings, tmp_path) -> Settings:
+    """Real data/config, but out/ and the SQLite DB in a temp dir."""
+    paths = settings.paths.model_copy(
+        update={"out": tmp_path / "out", "cache": tmp_path / "cache", "db": tmp_path / "db.sqlite"}
+    )
+    return settings.model_copy(update={"paths": paths})

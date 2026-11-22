@@ -1,1 +1,1 @@
-"""Phase placeholder: implemented in a later phase (see docs/PLAN.md)."""
+"""Script generation: briefs, template and LLM writers, assembly."""

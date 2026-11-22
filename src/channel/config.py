@@ -26,13 +26,31 @@ class Paths(_Cfg):
     prices: Path
     scoring: Path
     formats: Path
+    factcheck: Path
+    script_text: Path
     out: Path
     cache: Path
+    db: Path
 
 
 class Budget(_Cfg):
     monthly_inr: float = Field(gt=0)
+    per_video_inr: float = Field(gt=0)
     usd_to_inr: float = Field(gt=0)
+
+
+class LLM(_Cfg):
+    model: str
+    effort: Literal["low", "medium", "high", "xhigh", "max"]
+    max_tokens: int = Field(gt=0)
+    fix_attempts: int = Field(ge=0)
+
+
+class Price(_Cfg):
+    input: float = Field(ge=0)
+    output: float = Field(ge=0)
+    cache_read: float = Field(ge=0)
+    cache_write: float = Field(ge=0)
 
 
 class Demo(_Cfg):
@@ -41,12 +59,19 @@ class Demo(_Cfg):
 
 class Settings(_Cfg):
     lang: Lang
-    llm_model: str
     price_provider: str
     max_price_age_days: int = Field(gt=0)
+    price_history_days: int = Field(gt=0)
+    llm: LLM
+    pricing_usd_per_mtok: dict[str, Price]
     paths: Paths
     budget: Budget
     demo: Demo
+
+    def data_files(self) -> tuple[Path, ...]:
+        """Files whose content a fact-check result depends on."""
+        p = self.paths
+        return (p.products, p.prices, p.scoring, p.formats, p.factcheck, p.script_text)
 
     def resolve(self, root: Path) -> Settings:
         """Return a copy with relative paths anchored at ``root``."""
@@ -79,5 +104,5 @@ def load_settings(root: Path = REPO_ROOT, *, env: dict[str, str] | None = None) 
     raw = yaml.safe_load((root / "config" / "settings.yaml").read_text(encoding="utf-8"))
     raw["lang"] = resolve_lang(env, raw.get("lang", "hi"))
     if env.get("CHANNEL_LLM_MODEL"):
-        raw["llm_model"] = env["CHANNEL_LLM_MODEL"]
+        raw["llm"]["model"] = env["CHANNEL_LLM_MODEL"]
     return Settings.model_validate(raw).resolve(root)
