@@ -1,0 +1,140 @@
+# Scoring method — deterministic, explainable, versioned.
+#
+# How a phone is scored (also in docs/SCORING.md):
+#   1. Each metric turns one spec into a number in [0, 1]:
+#        linear: (value - min) / (max - min), clamped to [0, 1].
+#                If higher_is_better is false the result is inverted (1 - x).
+#                min/max are FIXED anchors, not dataset min/max, so a phone's
+#                score never changes because another phone was added.
+#        map:    look the (lower-cased) value up in a table. Unknown values fail loudly.
+#        bool:   true -> 1, false -> 0.
+#   2. Category score = sum(metric_score * metric_weight) * scale   (0..10)
+#   3. Overall score  = sum(category_score * category_weight)       (0..10)
+#   4. Ranking: overall desc, then lower current price, then product id.
+#
+# Weights inside a category must sum to 1, and category weights must sum to 1.
+# Change `version` whenever you change anything here — scripts cite it.
+
+version: 1
+scale: 10
+
+ranking:
+  # Shown as "strong points" / "weak points" and used for buy-if / skip-if cards.
+  strength_threshold: 7.5   # category score >= this is a strength
+  weakness_threshold: 5.0   # category score <= this is a weakness
+  max_strengths: 2
+  max_weaknesses: 2
+  # Head-to-head: a category difference smaller than this is called a tie.
+  tie_margin: 0.3
+
+categories:
+  performance:
+    weight: 0.25
+    label: {hi: "परफॉर्मेंस", en: "Performance"}
+    metrics:
+      - spec: antutu_v10
+        method: linear
+        min: 300000
+        max: 1500000
+        weight: 0.8
+        why: Published AnTuTu v10 score; the most comparable single performance number.
+      - spec: ram_gb
+        method: linear
+        min: 4
+        max: 12
+        weight: 0.2
+        why: More RAM keeps apps in memory; little benefit beyond 12 GB.
+
+  display:
+    weight: 0.20
+    label: {hi: "डिस्प्ले", en: "Display"}
+    metrics:
+      - spec: display_type
+        method: map
+        map: {amoled: 1.0, oled: 1.0, lcd: 0.4}
+        weight: 0.4
+        why: AMOLED/OLED give deeper blacks and better contrast than LCD.
+      - spec: refresh_rate_hz
+        method: linear
+        min: 60
+        max: 144
+        weight: 0.3
+        why: Higher refresh rate means smoother scrolling.
+      - spec: peak_brightness_nits
+        method: linear
+        min: 500
+        max: 2000
+        weight: 0.3
+        why: Higher brightness improves outdoor visibility.
+
+  camera:
+    weight: 0.20
+    label: {hi: "कैमरा", en: "Camera"}
+    metrics:
+      - spec: main_camera_ois
+        method: bool
+        weight: 0.4
+        why: Optical stabilisation matters more for low light and video than megapixels.
+      - spec: main_camera_mp
+        method: linear
+        min: 12
+        max: 108
+        weight: 0.3
+        why: Megapixels are a weak proxy for quality, so the weight is limited.
+      - spec: ultrawide_mp
+        method: linear
+        min: 0
+        max: 12
+        weight: 0.3
+        why: A usable ultrawide adds versatility (0 means no ultrawide).
+
+  battery:
+    weight: 0.20
+    label: {hi: "बैटरी", en: "Battery"}
+    metrics:
+      - spec: battery_mah
+        method: linear
+        min: 4000
+        max: 6000
+        weight: 0.6
+        why: Capacity is the main driver of battery life in this segment.
+      - spec: charging_w
+        method: linear
+        min: 10
+        max: 80
+        weight: 0.4
+        why: Faster charging reduces time tethered to a wall.
+
+  software:
+    weight: 0.10
+    label: {hi: "सॉफ्टवेयर अपडेट", en: "Software updates"}
+    metrics:
+      - spec: os_updates_years
+        method: linear
+        min: 1
+        max: 5
+        weight: 0.6
+        why: Promised OS upgrade years.
+      - spec: security_updates_years
+        method: linear
+        min: 2
+        max: 6
+        weight: 0.4
+        why: Promised security patch years.
+
+  build:
+    weight: 0.05
+    label: {hi: "बिल्ड", en: "Build"}
+    metrics:
+      - spec: ip_rating
+        method: map
+        map: {none: 0.0, ip52: 0.3, ip53: 0.4, ip54: 0.5, ip64: 0.7, ip65: 0.8, ip67: 0.9, ip68: 1.0}
+        weight: 0.6
+        why: Water and dust resistance.
+      - spec: weight_g
+        method: linear
+        min: 160
+        max: 220
+        higher_is_better: false
+        weight: 0.4
+        why: Lighter phones are more comfortable to hold.

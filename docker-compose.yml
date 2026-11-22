@@ -1,0 +1,12 @@
+services:
+  app:
+    build: .
+    image: yt-channel:dev
+    working_dir: /app
+    volumes:
+      - .:/app            # live source, data, config, out/
+    env_file:
+      - path: .env
+        required: false   # works before you create .env
+    environment:
+      CHANNEL_LANG: ${CHANNEL_LANG:-hi}

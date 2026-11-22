@@ -1,0 +1,21 @@
+# Pipeline settings. Secrets never go here — they live in .env (see .env.example).
+
+lang: hi                      # hi | en ; overridden by CHANNEL_LANG (or LANG=hi|en)
+llm_model: claude-opus-5-5    # overridden by CHANNEL_LLM_MODEL
+price_provider: manual_csv    # manual_csv | amazon_associates (stub) | flipkart_affiliate (stub)
+max_price_age_days: 7         # prices older than this are never quoted
+
+paths:
+  products: data/products.yaml
+  prices: data/prices.csv
+  scoring: config/scoring.yaml
+  formats: config/formats.yaml
+  out: out
+  cache: cache
+
+budget:
+  monthly_inr: 3000           # hard cap across all paid APIs (enforced from Phase 2)
+  usd_to_inr: 88.0            # conversion used in the cost ledger; update occasionally
+
+demo:
+  as_of: 2026-11-20           # fixed date so `make demo` and tests are reproducible

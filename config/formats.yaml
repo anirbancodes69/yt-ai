@@ -1,0 +1,26 @@
+# Video formats. Phase 1 uses only `price_bands_inr`; render/packaging details
+# are filled in during Phases 3-4.
+
+price_bands_inr: [10000, 15000, 20000, 30000, 50000]
+
+formats:
+  best_under:
+    title: Best phone under X
+    orientation: landscape
+    target_minutes: [6, 9]
+  head_to_head:
+    title: Head-to-head comparison
+    orientation: landscape
+    target_minutes: [6, 9]
+  launch_explainer:
+    title: Launch-day explainer
+    orientation: landscape
+    target_minutes: [6, 9]
+  deal_short:
+    title: Deal / price-drop Short
+    orientation: portrait
+    target_seconds: [30, 50]
+  monthly_refresh:
+    title: Monthly refresh of best-under-X lists
+    orientation: landscape
+    target_minutes: [6, 9]
